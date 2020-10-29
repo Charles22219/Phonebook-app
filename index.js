@@ -41,32 +41,22 @@ app.get('/api/persons', (request, response) => {
 
 app.post('/api/persons', (request, response, next) => {
     const body = request.body
-    // const hasDuplicate = body => persons.filter(person => person.name.toLowerCase() === body.name.toLowerCase()).length > 0 ? true : false
-
-    if (body.content === undefined) {
-        return response.status(400).json({ error: 'content missing' })
-    }
-
     if (!body.number || !body.name) {
         return response.status(400).json({
             error: 'name or number is missing'
         })
     }
-    // } else if (hasDuplicate(body)) {
-    //     return response.status(400).json({
-    //         error: 'name must be unique'
-    //     })
-    // }
 
     const person = new Person({
         name: body.name,
         number: body.number,
     })
 
-    person.save().then(savedPerson => {
-        console.log(savedPerson);
-        response.json(savedPerson)
-    })
+    person.save()
+        .then(savedPerson => {
+            console.log(savedPerson);
+            response.json(savedPerson)
+        })
         .catch(error => next(error))
 })
 
