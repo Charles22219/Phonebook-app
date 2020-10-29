@@ -1,7 +1,9 @@
+require('dotenv').config()
 const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
 const app = express()
+const Person = require('./models/person')
 
 app.use(express.static('build'))
 app.use(express.json())
@@ -24,29 +26,6 @@ const customFormat=(tokens, req, res) => {
 
 app.use(morgan(customFormat))
 
-let persons = [
-    {
-        "name": "Arto Hellas",
-        "number": "9041324",
-        "id": 1
-    },
-    {
-        "name": "Ada Lovelace",
-        "number": "39-44-5323523",
-        "id": 2
-    },
-    {
-        "name": "Dan Abramov",
-        "number": "12-43-234345",
-        "id": 3
-    },
-    {
-        "name": "Mary Poppendieck",
-        "number": "39-23-6423122",
-        "id": 4
-    }
-]
-
 const generateId = () => {
     return Math.floor(Math.random() * Math.floor(1000));
 }
@@ -56,41 +35,41 @@ app.get('/info', (request, response) => {
                     <div> ${new Date()} </div> `)
 })
 app.get('/api/persons', (request, response) => {
-    response.json(persons)
+    Person.find({}).then(persons => {
+        response.json(persons)
+    })
 })
 
 app.post('/api/persons', (request, response) => {
     const body = request.body
-    const hasDuplicate = body => persons.filter(person => person.name.toLowerCase() === body.name.toLowerCase()).length > 0 ? true : false
+    // const hasDuplicate = body => persons.filter(person => person.name.toLowerCase() === body.name.toLowerCase()).length > 0 ? true : false
 
     if (!body.number || !body.name) {
         return response.status(400).json({
             error: 'name or number is missing'
         })
-    } else if (hasDuplicate(body)) {
-        return response.status(400).json({
-            error: 'name must be unique'
-        })
     }
+    // } else if (hasDuplicate(body)) {
+    //     return response.status(400).json({
+    //         error: 'name must be unique'
+    //     })
+    // }
 
-    const person = {
+    const person = new Person({
         name: body.name,
         number: body.number,
-        id: generateId()
-    }
+    })
 
-    persons = persons.concat(person)
-    response.json(person)
+    person.save().then(savedPerson => {
+        console.log(savedPerson);
+        response.json(savedPerson)
+    })
 })
 
 app.get('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    const person = persons.find(person => person.id === id)
-    if (person) {
+    Person.findById(request.params.id).then( person => {
         response.json(person)
-    } else {
-        response.status(404).end()
-    }
+    })
 })
 
 app.delete('/api/persons/:id', (request, response) => {
